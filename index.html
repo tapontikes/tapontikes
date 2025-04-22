@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Payment Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+    }
+    .calculator {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #34495e;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .results {
+      margin-top: 30px;
+      background-color: #eaf6ff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #ccc;
+    }
+    .result-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #2c3e50;
+    }
+    .columned {
+      display: flex;
+      gap: 20px;
+    }
+    .column {
+      flex: 1;
+    }
+    .help-text {
+      font-size: 0.8em;
+      color: #7f8c8d;
+      margin-top: 3px;
+    }
+    .pmi-details {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f0f7fb;
+      border-left: 4px solid #3498db;
+      color: #333;
+    }
+    .down-payment-options {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 5px;
+    }
+    .down-payment-options input[type="radio"] {
+      width: auto;
+    }
+    .down-payment-options label {
+      display: inline;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mortgage Payment Calculator</h1>
+  
+  <div class="calculator">
+    <div class="columned">
+      <div class="column">
+        <div class="input-group">
+          <label for="purchasePrice">Purchase Price ($)</label>
+          <input type="number" id="purchasePrice" value="770000" min="0" step="1000" oninput="updateDownPayment()">
+        </div>
+        
+        <div class="input-group">
+          <label>Down Payment</label>
+          <div class="down-payment-options">
+            <input type="radio" id="downPaymentPercent5" name="downPaymentType" value="5" checked onclick="updateDownPaymentAmount(5)">
+            <label for="downPaymentPercent5">5%</label>
+            
+            <input type="radio" id="downPaymentPercent10" name="downPaymentType" value="10" onclick="updateDownPaymentAmount(10)">
+            <label for="downPaymentPercent10">10%</label>
+            
+            <input type="radio" id="downPaymentPercent20" name="downPaymentType" value="20" onclick="updateDownPaymentAmount(20)">
+            <label for="downPaymentPercent20">20%</label>
+            
+            <input type="radio" id="downPaymentCustom" name="downPaymentType" value="custom" onclick="focusCustomDownPayment()">
+            <label for="downPaymentCustom">Custom</label>
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <div style="flex: 1;">
+              <input type="number" id="downPaymentAmount" value="38500" min="0" step="1000" oninput="updateDownPaymentPercent()">
+              <div class="help-text">$ Amount</div>
+            </div>
+            <div style="flex: 1;">
+              <input type="number" id="downPaymentPercent" value="5" min="0" max="100" step="0.1" oninput="updateDownPaymentAmount()">
+              <div class="help-text">Percentage</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="input-group">
+          <label for="interestRate">Interest Rate (%)</label>
+          <input type="number" id="interestRate" value="6.65" min="0" max="20" step="0.01">
+        </div>
+        
+        <div class="input-group">
+          <label for="loanTerm">Loan Term (years)</label>
+          <select id="loanTerm">
+            <option value="30" selected>30 years</option>
+            <option value="15">15 years</option>
+            <option value="10">10 years</option>
+            <option value="20">20 years</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="column">
+        <div class="input-group">
+          <label for="propertyTax">Annual Property Tax ($)</label>
+          <input type="number" id="propertyTax" value="7020" min="0" step="100">
+          <div class="help-text">$585 monthly × 12 = $7,020 annually</div>
+        </div>
+        
+        <div class="input-group">
+          <label for="homeInsurance">Annual Home Insurance ($)</label>
+          <input type="number" id="homeInsurance" value="3000" min="0" step="100">
+          <div class="help-text">$250 monthly × 12 = $3,000 annually</div>
+        </div>
+        
+        <div class="input-group">
+          <label for="pmiRate">PMI Rate (% annually)</label>
+          <input type="number" id="pmiRate" value="0.18" min="0" max="2" step="0.01">
+          <div class="help-text">Calculated from document: $109.73 monthly on $731,500 loan = 0.18% annually</div>
+        </div>
+        
+        <div class="input-group">
+          <label for="hoa">Annual HOA/Condo Fees ($)</label>
+          <input type="number" id="hoa" value="0" min="0" step="120">
+        </div>
+        
+        <div class="input-group">
+          <label for="otherFees">Annual Other Fees ($)</label>
+          <input type="number" id="otherFees" value="0" min="0" step="120">
+        </div>
+      </div>
+    </div>
+    
+    <button onclick="calculateMortgage()">Calculate Mortgage Payment</button>
+    
+    <div class="results" id="results">
+      <div class="result-row">
+        <span>Loan Amount:</span>
+        <span id="loanAmount">$731,500.00</span>
+      </div>
+      <div class="result-row">
+        <span>Down Payment Percentage:</span>
+        <span id="downPaymentPercentage">5.0%</span>
+      </div>
+      <div class="result-row">
+        <span>Principal & Interest:</span>
+        <span id="principalInterest">$4,695.97</span>
+      </div>
+      <div class="result-row">
+        <span>Property Tax:</span>
+        <span id="taxResult">$585.00</span>
+      </div>
+      <div class="result-row">
+        <span>Home Insurance:</span>
+        <span id="insuranceResult">$250.00</span>
+      </div>
+      <div class="result-row">
+        <span>PMI:</span>
+        <span id="pmiResult">$109.73</span>
+      </div>
+      <div class="result-row">
+        <span>HOA/Condo Fees:</span>
+        <span id="hoaResult">$0.00</span>
+      </div>
+      <div class="result-row">
+        <span>Other Fees:</span>
+        <span id="otherResult">$0.00</span>
+      </div>
+      <div class="result-row total">
+        <span>Total Monthly Payment:</span>
+        <span id="totalPayment">$5,640.70</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set default values based on the document
+    document.addEventListener('DOMContentLoaded', function() {
+      calculateMortgage();
+    });
+
+    // Update down payment amount when purchase price changes
+    function updateDownPayment() {
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+      const downPaymentPercentInput = document.getElementById('downPaymentPercent');
+      const downPaymentPercent = parseFloat(downPaymentPercentInput.value);
+      
+      // Only update if we're not in "Custom" mode
+      const selectedOption = document.querySelector('input[name="downPaymentType"]:checked').value;
+      if (selectedOption !== 'custom') {
+        const newDownPayment = purchasePrice * (downPaymentPercent / 100);
+        document.getElementById('downPaymentAmount').value = Math.round(newDownPayment);
+      }
+      
+      // Recalculate the mortgage with the new values
+      calculateMortgage();
+    }
+
+    // Update down payment amount based on selected percentage
+    function updateDownPaymentAmount(percent = null) {
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+      
+      if (percent !== null) {
+        // Called from radio button
+        document.getElementById('downPaymentPercent').value = percent;
+        const newDownPayment = purchasePrice * (percent / 100);
+        document.getElementById('downPaymentAmount').value = Math.round(newDownPayment);
+      } else {
+        // Called from percentage input field
+        const percentValue = parseFloat(document.getElementById('downPaymentPercent').value);
+        const newDownPayment = purchasePrice * (percentValue / 100);
+        document.getElementById('downPaymentAmount').value = Math.round(newDownPayment);
+        document.getElementById('downPaymentCustom').checked = true;
+      }
+      
+      calculateMortgage();
+    }
+
+    // Update down payment percentage when amount changes
+    function updateDownPaymentPercent() {
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+      const downPaymentAmount = parseFloat(document.getElementById('downPaymentAmount').value);
+      const percent = (downPaymentAmount / purchasePrice) * 100;
+      
+      document.getElementById('downPaymentPercent').value = percent.toFixed(1);
+      document.getElementById('downPaymentCustom').checked = true;
+      
+      calculateMortgage();
+    }
+
+    // Focus on custom down payment field
+    function focusCustomDownPayment() {
+      document.getElementById('downPaymentAmount').focus();
+    }
+
+    function calculateMortgage() {
+      // Get input values
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+      let downPayment = parseFloat(document.getElementById('downPaymentAmount').value);
+      const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+      const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+      const annualPropertyTax = parseFloat(document.getElementById('propertyTax').value);
+      const annualInsurance = parseFloat(document.getElementById('homeInsurance').value);
+      const annualPmiRate = parseFloat(document.getElementById('pmiRate').value) / 100;
+      const annualHOA = parseFloat(document.getElementById('hoa').value) || 0;
+      const annualOtherFees = parseFloat(document.getElementById('otherFees').value) || 0;
+
+      // Calculate monthly values
+      const monthlyPropertyTax = annualPropertyTax / 12;
+      const monthlyInsurance = annualInsurance / 12;
+      const monthlyHOA = annualHOA / 12;
+      const monthlyOtherFees = annualOtherFees / 12;
+
+      // Calculate loan amount
+      const loanAmount = purchasePrice - downPayment;
+      
+      // Calculate down payment percentage
+      const downPaymentPercentage = (downPayment / purchasePrice) * 100;
+      
+      // Calculate monthly principal and interest payment
+      const numberOfPayments = loanTermYears * 12;
+      const monthlyInterestRate = interestRate / 12;
+      
+      const monthlyPrincipalInterest = loanAmount * 
+        (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfPayments)) / 
+        (Math.pow(1 + monthlyInterestRate, numberOfPayments) - 1);
+      
+      // Calculate PMI (Private Mortgage Insurance)
+      // Using the corrected PMI rate from the document
+      let pmi = 0;
+      
+      // PMI is typically required if down payment is less than 20%
+      if (downPaymentPercentage < 20) {
+        pmi = loanAmount * (annualPmiRate / 12);
+      }
+      
+      // Calculate total monthly payment
+      const totalMonthlyPayment = monthlyPrincipalInterest + monthlyPropertyTax + 
+        monthlyInsurance + pmi + monthlyHOA + monthlyOtherFees;
+      
+      // Update results
+      document.getElementById('loanAmount').textContent = formatCurrency(loanAmount);
+      document.getElementById('downPaymentPercentage').textContent = downPaymentPercentage.toFixed(1) + '%';
+      document.getElementById('principalInterest').textContent = formatCurrency(monthlyPrincipalInterest);
+      document.getElementById('taxResult').textContent = formatCurrency(monthlyPropertyTax);
+      document.getElementById('insuranceResult').textContent = formatCurrency(monthlyInsurance);
+      document.getElementById('pmiResult').textContent = formatCurrency(pmi);
+      document.getElementById('hoaResult').textContent = formatCurrency(monthlyHOA);
+      document.getElementById('otherResult').textContent = formatCurrency(monthlyOtherFees);
+      document.getElementById('totalPayment').textContent = formatCurrency(totalMonthlyPayment);
+    }
+    
+    // Format numbers as currency
+    function formatCurrency(number) {
+      return new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2 
+      }).format(number);
+    }
+  </script>
+</body>
+</html>
